@@ -22,14 +22,17 @@ int main(void){
     Gpioled.GPIO_PinConfig.GPIO_PinNumber = GPIO_PIN_5;
     Gpioled.GPIO_PinConfig.GPIO_PinMode = GPIO_MODE_OUT;
     Gpioled.GPIO_PinConfig.GPIO_PinSpeed = GPIO_OUT_SPEED_HIGH;
-    Gpioled.GPIO_PinConfig.GPIO_PinOType = GPIO_MODE_OUT_PUPL;
-    Gpioled.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PIN_NO_PUPD;
+    Gpioled.GPIO_PinConfig.GPIO_PinOType = GPIO_MODE_OUT_OD;
+    Gpioled.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PIN_PU;
 
     // Enable the clock for the GPIOA peripheral
     GPIO_PCLK_CTRL(GPIOA, ENABLE);
     // Initialise the GPIOA register with the above declared variables
     GPIO_Init(&Gpioled);
 
+
+
+    
     // Infinite loop
     while(1){
         GPIO_ToggleOutputPin(GPIOA, GPIO_PIN_5);

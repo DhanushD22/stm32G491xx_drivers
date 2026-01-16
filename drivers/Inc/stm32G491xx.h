@@ -35,6 +35,13 @@
 #define RCC_BASEADDR	   (AHB1PER_BASEADDR + 0x1000U)
 
 /*
+ * EXTI and SYSCGF Base Addresses
+*/
+
+#define EXTI_BASEADDR		(APB2PER_BASEADDR + 0x0400U)
+#define SYSCFG_BASEADDR 	(APB2PER_BASEADDR + 0x0000U)
+
+/*
  * Base Address of GPIO peripherals
  */
 #define GPIOA_BASEADDR     (AHB2PER_BASEADDR + 0x0000U)
@@ -156,6 +163,51 @@ typedef struct{
 }RCC_RegDef_t;
 
 
+/*
+ * SYSCFG Regester Structure Definition
+*/
+
+typedef struct 
+{
+	__vo uint32_t MEMRMP;			/* 		Offset: 0x00		*/
+	__vo uint32_t CFGR1;			/* 		Offset: 0x04		*/
+	__vo uint32_t EXTICR1;			/* 		Offset: 0x08		*/
+	__vo uint32_t EXTICR2;			/* 		Offset: 0x0C		*/
+	__vo uint32_t EXTICR3;			/* 		Offset: 0x10		*/
+	__vo uint32_t EXTICR4;			/* 		Offset: 0x14		*/
+	__vo uint32_t SCSR;				/* 		Offset: 0x18		*/
+	__vo uint32_t CFGR2;			/*		Offset: 0x1C		*/
+	__vo uint32_t SWPR;				/* 		Offset: 0x20		*/
+	__vo uint32_t SKR;				/* 		Offset: 0x24		*/
+
+}SYSCFG_RegDef_t;
+
+
+/*
+ * EXTI Regester Structure Definition
+*/
+
+typedef struct 
+{
+	__vo uint32_t IMR1;				/* 		Offset: 0x00		*/
+	__vo uint32_t EMR1;				/* 		Offset: 0x04		*/
+	__vo uint32_t RTSR1;			/* 		Offset: 0x08		*/
+	__vo uint32_t FTSR1;			/* 		Offset: 0x0C		*/
+	__vo uint32_t SWIER1;			/* 		Offset: 0x10		*/
+	__vo uint32_t PR1;				/* 		Offset: 0x14		*/
+	__vo uint32_t RESERVED[2];		/* 		Offset: 0x18 and 0x1C*/
+	__vo uint32_t IMR2;				/* 		Offset: 0x20		*/
+	__vo uint32_t EMR2;				/*		Offset: 0x24		*/
+	__vo uint32_t RTSR2;			/* 		Offset: 0x28		*/
+	__vo uint32_t FTSR2;			/* 		Offset: 0x2C		*/
+	__vo uint32_t SWIER2;			/* 		Offset: 0x30		*/
+	__vo uint32_t PR2;				/* 		Offset: 0x34		*/
+
+}EXTI_RegDef_t;
+
+
+
+
 /************************************Peripheral Definitions******************************************************/
 
 // GPIO Peripherals:
@@ -171,6 +223,14 @@ typedef struct{
 
 // RCC Peripherals:
 #define	RCC 		( (RCC_RegDef_t*) RCC_BASEADDR )
+
+
+// SCFG peripherals 
+#define SYSCFG 		( (SYSCFG_RegDef_t*)SYSCFG_BASEADDR)
+
+
+// EXTI peripheral
+#define EXTI		( (EXTI_RegDef_t*)EXTI_BASEADDR)
 
 
 /*
@@ -282,6 +342,6 @@ typedef struct{
 
 
 
-
+#include "stm32G491xx_gpio_driver.h"
 
 #endif /* INC_STM32G491XX_H_ */
