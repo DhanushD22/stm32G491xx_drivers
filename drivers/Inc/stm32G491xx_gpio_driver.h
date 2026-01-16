@@ -70,9 +70,9 @@ typedef struct{
 #define GPIO_MODE_ALTFN 		2
 #define GPIO_MODE_ANALOG		3
 // When the GPIO pin is in input mode it can also have interrupts so
-#define GPIO_MODE_IN_FT 		4  	// Input Falling Edge Trigger
-#define GPIO_MODE_IN_RT 		5   // Input Raising Edge Trigger
-#define GPIO_MODE_INFRT			6 	// Input Raising Edge Falling Edge Trigger
+#define GPIO_MODE_IT_FT 		4  	// Input Falling Edge Trigger
+#define GPIO_MODE_IT_RT 		5   // Input Raising Edge Trigger
+#define GPIO_MODE_ITFRT			6 	// Input Raising Edge Falling Edge Trigger
 
 /*
  * @GPIO_PIN_OUTPUT_MODES
@@ -143,7 +143,8 @@ void GPIO_WriteToOutputPort(GPIO_RegDef_t *pGPIOx, uint16_t Value);
 void GPIO_ToggleOutputPin(GPIO_RegDef_t *pGPIOx, uint8_t PinNumber);
 
 // IRQ configuration and IRQ handling
-void GPIO_IRQCOnfig(uint8_t IRQNumber, uint8_t IRQPriority, uint8_t EnORDi);
+void GPIO_IRQInterruptConfig(uint8_t IRQNumber, uint8_t EnORDi);
+void GPIO_IRQPriorityConfig(uint8_t IRQNumber, uint8_t IRQPriority);
 void GPIO_IRQHandling(uint8_t PinNumber); //interrupt for that Pin Number will be managed so we need only pi-number as a parameter
 
 

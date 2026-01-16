@@ -11,6 +11,30 @@
 
 #include<stdint.h>
 
+/************************************Processror Specific Details******************************************************/
+/*
+ * ARM Cortex M4 Processor NVIC ISERx register addresses (interrupt set register)
+*/
+#define NVIC_ISER0			( (__vo uint32_t*)0xE000E100 )
+#define NVIC_ISER1			( (__vo uint32_t*)0xE000E104 )
+#define NVIC_ISER2			( (__vo uint32_t*)0xE000E108 )
+#define NVIC_ISER3			( (__vo uint32_t*)0xE000E10C )
+
+/*
+ * ARM Cortex M4 Processor NVIC ICERx register addresses (interrupt clear register)
+*/
+#define NVIC_ICER0			( (__vo uint32_t*)0XE000E180 )
+#define NVIC_ICER1			( (__vo uint32_t*)0XE000E184 )
+#define NVIC_ICER2			( (__vo uint32_t*)0XE000E188 )
+#define NVIC_ICER3			( (__vo uint32_t*)0XE000E18C )
+
+/*
+ * ARM Cortex M4 Processor NVIC IPRx register addresses  (interrupt priority register)
+*/
+
+#define NVIC_IPR					( (__vo uint32_t*)0xE000E400)
+#define no_of_PR_bits_implemented	4			// Depends on the processor for stm32G4 series it is 4
+
 #define __vo volatile
 /*
  * Base addresses of SRAM and FLASH
@@ -77,11 +101,7 @@
 #define UART4_BASEADDR     (APB1PER_BASEADDR + 0x4C00U)
 #define UART5_BASEADDR     (APB1PER_BASEADDR + 0x5000U)
 
-/*
- * Base Address of EXTI and SYSCFG
- */
-#define SYSCFG_BASEADDR    (APB2PER_BASEADDR + 0x3800U)  // 0x40013800
-#define EXTI_BASEADDR      (APB2PER_BASEADDR + 0x3C00U)  // 0x40013C00
+
 
 /************************************Peripheral Register Structure Definitions******************************************************/
 /*
@@ -171,10 +191,7 @@ typedef struct
 {
 	__vo uint32_t MEMRMP;			/* 		Offset: 0x00		*/
 	__vo uint32_t CFGR1;			/* 		Offset: 0x04		*/
-	__vo uint32_t EXTICR1;			/* 		Offset: 0x08		*/
-	__vo uint32_t EXTICR2;			/* 		Offset: 0x0C		*/
-	__vo uint32_t EXTICR3;			/* 		Offset: 0x10		*/
-	__vo uint32_t EXTICR4;			/* 		Offset: 0x14		*/
+	__vo uint32_t EXTICR[3];		/* 		Offset: 0x08 - 0x14		*/
 	__vo uint32_t SCSR;				/* 		Offset: 0x18		*/
 	__vo uint32_t CFGR2;			/*		Offset: 0x1C		*/
 	__vo uint32_t SWPR;				/* 		Offset: 0x20		*/
@@ -273,7 +290,11 @@ typedef struct
 #define UART4_PCLK_EN()			( RCC->APB1ENR1 |= (1 << 19))
 #define UART5_PCLK_EN()			( RCC->APB1ENR1 |= (1 << 20))
 
+/*
+ * Clock Enable macro for SysConfig peripheral
+*/
 
+#define SYSCONFIG_PCLK_EN() 	( RCC->APB2ENR |= (1 << 0))
 
 
 
@@ -328,6 +349,35 @@ typedef struct
 #define GPIOE_REG_RESET()		do{  ( RCC->AHB2RSTR |= (1UL << 4));	( RCC->AHB2RSTR &= ~(1UL << 4)); } while(0)
 #define GPIOF_REG_RESET()		do{  ( RCC->AHB2RSTR |= (1UL << 5));	( RCC->AHB2RSTR &= ~(1UL << 5)); } while(0)
 #define GPIOG_REG_RESET()		do{  ( RCC->AHB2RSTR |= (1UL << 6));	( RCC->AHB2RSTR &= ~(1UL << 6)); } while(0)
+
+
+#define GPIOB_BASEADDR_TO_CODE(x) 	(	(x == GPIOA) ? 0 :\
+										(x == GPIOB) ? 1 :\
+										(x == GPIOC) ? 2 :\
+										(x == GPIOD) ? 3 :\
+										(x == GPIOE) ? 4 :\
+										(x == GPIOF) ? 5 :\
+										(x == GPIOG) ? 6 : 0)
+
+/*
+ * Interrupt request numbers (IRQn) for STM32G491xx series MCUs
+ * (using POSITION numbers from the vector table)
+ */
+
+#define IRQ_NO_WWDG                  0      // Window Watchdog interrupt
+#define IRQ_NO_PVD_PVM               1      // PVD/PVM1/PVM2/PVM3/PVM4 through EXTI line 16
+#define IRQ_NO_RTC_TAMP_CSS_LSE      2      // RTC tamper / CSS on LSE / LSECSS through EXTI line 19
+#define IRQ_NO_RTC_WKUP              3      // RTC wakeup timer through EXTI line 20
+#define IRQ_NO_FLASH                 4      // Flash global interrupt
+#define IRQ_NO_RCC                   5      // RCC global interrupt
+#define IRQ_NO_EXTI0                 6      // EXTI Line 0 interrupt
+#define IRQ_NO_EXTI1                 7      // EXTI Line 1 interrupt
+#define IRQ_NO_EXTI2                 8      // EXTI Line 2 interrupt
+#define IRQ_NO_EXTI3                 9      // EXTI Line 3 interrupt
+#define IRQ_NO_EXTI4                 10     // EXTI Line 4 interrupt
+#define IRQ_NO_EXTI9_5               23     // EXTI Line [9:5] interrupts
+#define IRQ_NO_EXTI15_10             40     // EXTI Line [15:10] interrupts
+
 
 /*
  * Generic Macros

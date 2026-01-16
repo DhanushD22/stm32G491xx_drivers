@@ -77,12 +77,36 @@ void GPIO_Init(GPIO_Handle_t *pGPIOHandle){
 		temp = ( (pGPIOHandle->GPIO_PinConfig.GPIO_PinMode) << (2 * pin) );
 		pGPIOHandle->pGPIOx->MODER &= ~( 3 << (2 * pin) );
 		pGPIOHandle->pGPIOx->MODER |= temp;
-		temp = 0;
 	}else{
-		//<TODO>
-		// hey 
-		temp = 0;
+		if(pGPIOHandle->GPIO_PinConfig.GPIO_PinMode == GPIO_MODE_IT_FT){
+			//1. Configure the FTSR 
+			EXTI->FTSR1 |= (1 << pin);
+			// clear the corresponding RTSR bit
+			EXTI->RTSR1 &= ~(1 << pin);
+		}else if(pGPIOHandle->GPIO_PinConfig.GPIO_PinMode == GPIO_MODE_IT_RT){
+			//1. COnfigure the RTSR
+			EXTI->RTSR1 |= (1 << pin);
+			// clear the corresponding FTSR bit
+			EXTI->FTSR1 &= ~(1 << pin);
+		}else if(pGPIOHandle->GPIO_PinConfig.GPIO_PinMode == GPIO_MODE_ITFRT){
+			//1. COnfigure both FTSR and RTSR
+			EXTI->RTSR1 |= (1 << pin);
+			EXTI->FTSR1 |= (1 << pin);
+		}
+		//2. Confiure the SYSCFG_EXTICRx Register
+		uint8_t temp1, temp2, portcode;
+		temp1 = pin/4;
+		temp2 = pin%4;
+		temp2 *= 4;
+		portcode = GPIOB_BASEADDR_TO_CODE((pGPIOHandle->pGPIOx));
+		SYSCONFIG_PCLK_EN();
+		SYSCFG->EXTICR[temp1] |= (portcode << temp2);
+		//3. Enable the EXTI interrupt delivery using the interrupt mask register
+		EXTI->IMR1 |= (1 << pin);
+		//4. 
 	}
+
+	temp = 0;
 
 	// 2. Configure the speed
 	temp = ( (pGPIOHandle->GPIO_PinConfig.GPIO_PinSpeed) << (2 * pin) );
@@ -284,11 +308,62 @@ void GPIO_ToggleOutputPin(GPIO_RegDef_t *pGPIOx, uint8_t PinNumber){
  * @note        Any important note, limitation or usage tip
  */
 
-void GPIO_IRQCOnfig(uint8_t IRQNumber, uint8_t IRQPriority, uint8_t EnORDi){
+void GPIO_IRQInterruptConfig(uint8_t IRQNumber, uint8_t EnORDi){
+	if(EnORDi == ENABLE){
+		if(IRQNumber <=31){
+			// Program ISER0 register
+			*NVIC_ISER0 |= (1 << IRQNumber);
+		}else if(IRQNumber > 31 && IRQNumber < 64){
+			// Program ISER1 register
+			*NVIC_ISER1 |= (1 << (IRQNumber%32));
+		}else if(IRQNumber >= 64 && IRQNumber < 96){
+			// Program ISER2 register
+			*NVIC_ISER2 |= (1 << (IRQNumber%64));
+		}else if(IRQNumber >= 96 && IRQNumber < 128){ // there are Interrupts upto 101 
+			// Program ISER3 register
+			*NVIC_ISER3 |= (1 << (IRQNumber%96));
+		}
+	}else{
+		if(IRQNumber <=31){
+			// Program ICER0 register
+			*NVIC_ICER0 |= (1 << IRQNumber);
+		}else if(IRQNumber > 31 && IRQNumber < 64){
+			// Program ICER1 register
+			*NVIC_ICER1 |= (1 << (IRQNumber%32));
+		}else if(IRQNumber >= 64 && IRQNumber < 96){
+			// Program ICER2 register
+			*NVIC_ICER2 |= (1 << (IRQNumber%64));
+		}else if(IRQNumber >= 96 && IRQNumber < 128){ // there are Interrupts upto 101 
+			// Program ICER3 register
+			*NVIC_ICER3 |= (1 << (IRQNumber%96));
+		}
 
+	}
 }
 
 
+/**
+ * @fn          GPIO_IRQPriorityConfig
+ *
+ * @brief       Set priority to the Interrupt 
+ *
+ * @param[in]   uint8_t IRQNumber      Description of first parameter
+ * @param[in]   uint8_t IRQPriority      Description of second parameter (if any)
+ * @param[out]  param3      Description of output parameter (if any)
+ *
+ * @return      Description of return value
+ *              (e.g. 0 on success, -1 on error, or void)
+ *
+ * @note        Any important note, limitation or usage tip
+ */
+
+void GPIO_IRQPriorityConfig(uint8_t IRQNumber, uint8_t IRQPriority){
+	// 1. Find out the IPR register to be used
+	uint8_t iprx = IRQNumber / 4;
+	uint8_t offset = IRQNumber % 4;
+	uint8_t shift_amount = (offset * 8) + (8 - no_of_PR_bits_implemented);
+	*( NVIC_IPR + (iprx * 4) ) |= ( IRQPriority << shift_amount );
+}
 
 /**
  * @fn          GPIO_IRQHandling
@@ -304,9 +379,25 @@ void GPIO_IRQCOnfig(uint8_t IRQNumber, uint8_t IRQPriority, uint8_t EnORDi){
  *
  * @note        Any important note, limitation or usage tip
  */
-
+/*
+Strictly speaking the ISR's are not really implemented in the driver code. 
+They are application specific so they are implemented in the user application.
+The ISr implemented in the application area should call the driver supported GPIO handler 
+in order to process that input.
+If you go through the startup code there are ISR's implemented(the weak implementaion of ISR's)
+whenever you need to implement the ISR you need to overwrite that ISR 
+To do so, go to the startup folder open the .s file and search for the handler you need and then copy 
+the name of the handler and implement in the main user applicaiton.
+Remember: These functions dosen't take any arguments and do not return anything.
+Inside this function you need to handle the interrupt. 
+*/ 
 void GPIO_IRQHandling(uint8_t PinNumber){//interrupt for that Pin Number will be managed so we need only pi-number as a parameter
-
+	// Clear the EXTI Pending Register corresponding to the pin number.
+	if(EXTI->PR1 & (1 << PinNumber)){
+		// Clear the pending register bit
+		// Writing one to the bit clears it accroding to the manual
+		EXTI->PR1 |= (1 << PinNumber);
+	}
 }
 
 
