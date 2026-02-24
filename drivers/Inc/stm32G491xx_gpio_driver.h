@@ -28,13 +28,14 @@ typedef struct{
 
 
 /*
- * Driver handler structure for GPIO
+ * Driver handler structure for GPIO where we can pass the GPIO pin configuration settings
+ * and also the base address of the GPIO port to which the pin belongs
 */
 
 typedef struct{
 
 	GPIO_RegDef_t *pGPIOx; /* this holds the base address of the GPIO port to which the pin belongs */
-	GPIO_PinConfig GPIO_PinConfig;
+	GPIO_PinConfig GPIO_PinConfig; // this holds the GPIO pin configuration settings.
 }GPIO_Handle_t;
 
 

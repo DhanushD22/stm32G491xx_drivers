@@ -1,5 +1,6 @@
-"./Src/002LED_Toggle.o"
+"./Src/001LED_Toggle.o"
 "./Src/syscalls.o"
 "./Src/sysmem.o"
 "./Startup/startup_stm32g491retx.o"
 "./drivers/Src/stm32G491xx_gpio_driver.o"
+"./drivers/Src/stm32G491xx_spi_driver.o"

@@ -50,19 +50,19 @@
 /*
  * Base Address of various BUS Domains
  */
-#define APB1PER_BASEADDR   0x40000000U
-#define APB2PER_BASEADDR   0x40010000U
-#define AHB1PER_BASEADDR   0x40020000U
-#define AHB2PER_BASEADDR   0x48000000U
+#define APB1PER_BASEADDR   0x40000000U 		// APB1 peripheral base address = 0x40000000U ( U - unsigned int, ecause address are not signed)
+#define APB2PER_BASEADDR   0x40010000U		// APB2 peripheral base address
+#define AHB1PER_BASEADDR   0x40020000U		// AHB1 peripheral base address
+#define AHB2PER_BASEADDR   0x48000000U		// AHB2 peripheral base address
 
 // RCC Base address:
-#define RCC_BASEADDR	   (AHB1PER_BASEADDR + 0x1000U)
+#define RCC_BASEADDR	   (AHB1PER_BASEADDR + 0x1000U) 		// Reset Clock Control (RCC) perppheral base address. This is connected to the AHB1 Peripheral so use the base address and add the offset 
 
 /*
  * EXTI and SYSCGF Base Addresses
 */
 
-#define EXTI_BASEADDR		(APB2PER_BASEADDR + 0x0400U)
+#define EXTI_BASEADDR		(APB2PER_BASEADDR + 0x0400U)		
 #define SYSCFG_BASEADDR 	(APB2PER_BASEADDR + 0x0000U)
 
 /*
@@ -110,17 +110,17 @@
 
 typedef struct {
 
-	__vo uint32_t MODER; 		/* Register Definition 		 Offset: 0x00   */
-	__vo uint32_t OTYPER;		/* Register Definition 		 Offset: 0x04   */
-	__vo uint32_t OSPEEDR;		/* Register Definition 		 Offset: 0x08   */
-	__vo uint32_t PUPDR;		/* Register Definition 		 Offset: 0x0C   */
-	__vo uint32_t IDR;			/* Register Definition 		 Offset: 0x10   */
-	__vo uint32_t ODR;			/* Register Definition 		 Offset: 0x14   */
-	__vo uint32_t BSRR;			/* Register Definition 		 Offset: 0x18   */
-	__vo uint32_t LCKR;			/* Register Definition 		 Offset: 0x1C   */
-	__vo uint32_t AFRL;			/* Register Definition 		 Offset: 0x20   */
-	__vo uint32_t AFRH;			/* Register Definition 		 Offset: 0x24   */
-	__vo uint32_t BRR;			/* Register Definition 		 Offset: 0x28   */
+	__vo uint32_t MODER; 		/* GPIO Pin mode register 				Offset: 0x00   */
+	__vo uint32_t OTYPER;		/* GPIO Output type register 			Offset: 0x04   */
+	__vo uint32_t OSPEEDR;		/* GPIO Output speed register 			Offset: 0x08   */
+	__vo uint32_t PUPDR;		/* GPIO Pull-up/Pull-down register 		Offset: 0x0C   */
+	__vo uint32_t IDR;			/* Input Data Register 		 			Offset: 0x10   */
+	__vo uint32_t ODR;			/* Output Data Register 	 			Offset: 0x14   */
+	__vo uint32_t BSRR;			/* Register Definition 		 			Offset: 0x18   */
+	__vo uint32_t LCKR;			/* Register Definition 		 			Offset: 0x1C   */
+	__vo uint32_t AFRL;			/* Alternate function register-1 		Offset: 0x20   */
+	__vo uint32_t AFRH;			/* Alternate function register-2 		Offset: 0x24   */
+	__vo uint32_t BRR;			/* Register Definition 		 			Offset: 0x28   */
 
 }GPIO_RegDef_t;
 
@@ -224,10 +224,28 @@ typedef struct
 
 
 
+/*
+ * ESPI Regester Structure Definition
+*/
+
+typedef struct 
+{
+	__vo uint32_t SPIx_CR1;				/* 		Offset: 0x00		*/
+	__vo uint32_t SPIx_CR2;				/* 		Offset: 0x04		*/
+	__vo uint32_t SPIx_SR;				/* 		Offset: 0x08		*/
+	__vo uint32_t SPIx_DR;				/* 		Offset: 0x0C		*/
+	__vo uint32_t SPIx_CRCPR;			/* 		Offset: 0x10		*/
+	__vo uint32_t SPIx_RXCRCR;			/* 		Offset: 0x14		*/
+	__vo uint32_t SPIx_TXCRCR;			/* 		Offset: 0x18		*/
+	__vo uint32_t SPIx_I2SCFGR;			/* 		Offset: 0x1C		*/
+	__vo uint32_t SPIx_I2SPR;			/* 		Offset: 0x20		*/
+}SPI_RegDef_t;
+
+
 
 /************************************Peripheral Definitions******************************************************/
 
-// GPIO Peripherals:
+// GPIO Peripherals: There are 8 gpio perhipherals (GPIOA, GPIOB, GPIOC, GPIOD, GPIOE, GPIOF and GPIOG) I have defined only 7 because GPIOH is not present in STM32G491xx series
 
 #define GPIOA 		( (GPIO_RegDef_t*)GPIOA_BASEADDR )
 #define GPIOB 		( (GPIO_RegDef_t*)GPIOB_BASEADDR )
@@ -241,7 +259,6 @@ typedef struct
 // RCC Peripherals:
 #define	RCC 		( (RCC_RegDef_t*) RCC_BASEADDR )
 
-
 // SCFG peripherals 
 #define SYSCFG 		( (SYSCFG_RegDef_t*)SYSCFG_BASEADDR)
 
@@ -249,13 +266,20 @@ typedef struct
 // EXTI peripheral
 #define EXTI		( (EXTI_RegDef_t*)EXTI_BASEADDR)
 
+/*
+ * SPI Peripherals
+*/
+#define SPI1		( (SPI_RegDef_t*)SPI1_BASEADDR )
+#define SPI2		( (SPI_RegDef_t*)SPI2_BASEADDR )
+#define SPI3		( (SPI_RegDef_t*)SPI3_BASEADDR )	
+#define SPI4 		( (SPI_RegDef_t*)SPI4_BASEADDR )
 
 /*
  * Clock Enable macro for GPIOx(x = A, B,....,G) peripherals
 */
 
-#define GPIOA_PCLK_EN()		( RCC->AHB2ENR |= (1 << 0) )
-#define GPIOB_PCLK_EN()		( RCC->AHB2ENR |= (1 << 1) )
+#define GPIOA_PCLK_EN()		( RCC->AHB2ENR |= (1 << 0) ) 	//  First bit of the AHB2ENR register is for GPIOA peripheral, so we need to set that bit to enable the clock for GPIOA peripheral
+#define GPIOB_PCLK_EN()		( RCC->AHB2ENR |= (1 << 1) )	// Second bit of the AHB2ENR register is for GPIOB peripheral, so we need to set that bit to enable the clock for GPIOB peripheral
 #define GPIOC_PCLK_EN()		( RCC->AHB2ENR |= (1 << 2) )
 #define GPIOD_PCLK_EN()		( RCC->AHB2ENR |= (1 << 3) )
 #define GPIOE_PCLK_EN()		( RCC->AHB2ENR |= (1 << 4) )
@@ -389,9 +413,68 @@ typedef struct
 #define RESET 				DISABLE
 #define GPIO_PIN_SET 		SET
 #define GPIO_PIN_RESET		RESET
+#define FLAG_SET			SET
+#define FLAG_RESET			RESET
+
+/*
+ * Bit position definitions for SPI peripheral
+ Macros tell the bit position of the corresponding configuration bits in the SPI_CR1, SPI_CR2 and SPI_SR  registers. These macros will be used in the SPI driver source file to configure the SPI peripheral based on the user configurations in the SPI handle structure.
+*/
+#define SPI_CR1_CPHA			0
+#define SPI_CR1_CPOL			1
+#define SPI_CR1_MSTR			2
+#define SPI_CR1_BR				3
+#define SPI_CR1_SPE				6
+#define SPI_CR1_LSBFIRST		7
+#define SPI_CR1_SSI				8
+#define SPI_CR1_SSM				9
+#define SPI_CR1_RXONLY			10
+#define SPI_CR1_DFF				11
+#define SPI_CR1_CRCNEXT			12
+#define SPI_CR1_CRCEN			13
+#define SPI_CR1_BIDIOE			14	
+#define SPI_CR1_BIDIMODE		15
+
+#define SPI_CR2_RXDMAEN			0
+#define SPI_CR2_TXDMAEN			1
+#define SPI_CR2_SSOE			2
+#define SPI_CR2_ERRIE			5
+#define SPI_CR2_RXNEIE			6
+#define SPI_CR2_TXEIE			7	
+#define SPI_CR2_DS				8
+#define SPI_CR2_FRXTH			12
+#define SPI_CR2_LDMARX			13
+#define SPI_CR2_LDMATX			14
+
+// Bit position definitions for SPI_SR register
+#define SPI_SR_RXNE				0
+#define SPI_SR_TXE				1
+#define SPI_SR_CHSIDE			2
+#define SPI_SR_UDR				3
+#define SPI_SR_CRCERR			4
+#define SPI_SR_MODF				5
+#define SPI_SR_OVR				6
+#define SPI_SR_BSY				7
+#define SPI_SR_FRE				8
+#define SPI_SR_FRLVL			9
+#define SPI_SR_FTLVL			11
+
+
+
+/*
+* Reset SPI registers
+*/
+								/* 				SET					then 			RESET					*/
+#define SPI1_REG_RESET()		do{  ( RCC->APB2RSTR |= (1UL << 12));	( RCC->APB2RSTR &= ~(1UL << 12)); } while(0)
+#define SPI2_REG_RESET()		do{  ( RCC->APB1RSTR1 |= (1UL << 14));	( RCC->APB1RSTR1 &= ~(1UL << 14)); } while(0)
+#define SPI3_REG_RESET()		do{  ( RCC->APB1RSTR1 |= (1UL << 15));	( RCC->APB1RSTR1 &= ~(1UL << 15)); } while(0)
+#define SPI4_REG_RESET()		do{  ( RCC->APB2RSTR |= (1UL << 15));	( RCC->APB2RSTR &= ~(1UL << 15)); } while(0)
+
+
 
 
 
 #include "stm32G491xx_gpio_driver.h"
+#include "stm32G491xx_spi_driver.h"
 
-#endif /* INC_STM32G491XX_H_ */
+#endif

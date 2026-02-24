@@ -73,22 +73,25 @@ void GPIO_Init(GPIO_Handle_t *pGPIOHandle){
 	uint32_t temp = 0;
 	uint8_t pin = pGPIOHandle->GPIO_PinConfig.GPIO_PinNumber;
 	// 1. Configure the mode of the pin
-	if(pGPIOHandle->GPIO_PinConfig.GPIO_PinMode <= GPIO_MODE_ANALOG){
-		temp = ( (pGPIOHandle->GPIO_PinConfig.GPIO_PinMode) << (2 * pin) );
+	if(pGPIOHandle->GPIO_PinConfig.GPIO_PinMode <= GPIO_MODE_ANALOG){ // this means that the pin is not in interrupt mode because the interrupt modes are defined after the analog mode in the enum
+		// load the temp variable with the value of the pin mode shifted to the correct position
+		temp = ( (pGPIOHandle->GPIO_PinConfig.GPIO_PinMode) << (2 * pin) ); // 32 bit register but each pin has 2 bits in the MODER register, so we need to shift the pin mode value to the correct position
+		// clear the bits that are corresponding to the pin number in the MODER register
 		pGPIOHandle->pGPIOx->MODER &= ~( 3 << (2 * pin) );
+		// set the bits that are corresponding to the pin number in the MODER register
 		pGPIOHandle->pGPIOx->MODER |= temp;
-	}else{
-		if(pGPIOHandle->GPIO_PinConfig.GPIO_PinMode == GPIO_MODE_IT_FT){
+	}else{ // when pin is in interrupt mode we need to configure the EXTI registers and SYSCFG_EXTICR registers
+		if(pGPIOHandle->GPIO_PinConfig.GPIO_PinMode == GPIO_MODE_IT_FT){ // falling edge trigger
 			//1. Configure the FTSR 
 			EXTI->FTSR1 |= (1 << pin);
 			// clear the corresponding RTSR bit
 			EXTI->RTSR1 &= ~(1 << pin);
-		}else if(pGPIOHandle->GPIO_PinConfig.GPIO_PinMode == GPIO_MODE_IT_RT){
+		}else if(pGPIOHandle->GPIO_PinConfig.GPIO_PinMode == GPIO_MODE_IT_RT){ // raising edge trigger
 			//1. COnfigure the RTSR
 			EXTI->RTSR1 |= (1 << pin);
 			// clear the corresponding FTSR bit
 			EXTI->FTSR1 &= ~(1 << pin);
-		}else if(pGPIOHandle->GPIO_PinConfig.GPIO_PinMode == GPIO_MODE_ITFRT){
+		}else if(pGPIOHandle->GPIO_PinConfig.GPIO_PinMode == GPIO_MODE_ITFRT){ // both edge trigger
 			//1. COnfigure both FTSR and RTSR
 			EXTI->RTSR1 |= (1 << pin);
 			EXTI->FTSR1 |= (1 << pin);
