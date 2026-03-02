@@ -1,0 +1,14 @@
+../drivers/Src/stm32G491xx_spi_driver.c:11:9:SPI_GetFlagStatus	16	static
+../drivers/Src/stm32G491xx_spi_driver.c:29:6:SPI_PCLK_CTRL	16	static
+../drivers/Src/stm32G491xx_spi_driver.c:68:6:SPI_Init	24	static
+../drivers/Src/stm32G491xx_spi_driver.c:160:6:SPI_DeInit	16	static
+../drivers/Src/stm32G491xx_spi_driver.c:199:6:SPI_SendData	32	static
+../drivers/Src/stm32G491xx_spi_driver.c:227:6:SPI_ReceiveData	32	static
+../drivers/Src/stm32G491xx_spi_driver.c:254:6:SPI_SendDataIT	24	static
+../drivers/Src/stm32G491xx_spi_driver.c:271:6:SPI_ReceiveDataIT	24	static
+../drivers/Src/stm32G491xx_spi_driver.c:276:6:SPI_IRQInterruptConfig	16	static
+../drivers/Src/stm32G491xx_spi_driver.c:326:6:SPI_IRQPriorityConfig	24	static
+../drivers/Src/stm32G491xx_spi_driver.c:335:6:SPI_IRQHandling	16	static
+../drivers/Src/stm32G491xx_spi_driver.c:340:6:SPI_PeripheralControl	16	static
+../drivers/Src/stm32G491xx_spi_driver.c:352:6:SPI_SSIConfig	16	static
+../drivers/Src/stm32G491xx_spi_driver.c:364:6:SPI_SSOEConfig	16	static

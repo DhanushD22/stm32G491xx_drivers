@@ -70,6 +70,8 @@ void GPIO_PCLK_CTRL(GPIO_RegDef_t *pGPIOx, uint8_t EnORDi){
 
 
 void GPIO_Init(GPIO_Handle_t *pGPIOHandle){
+	// Enable the peripheral clock here so that user doesn't have to do it explicitly
+	GPIO_PCLK_CTRL(pGPIOHandle->pGPIOx, ENABLE);
 	uint32_t temp = 0;
 	uint8_t pin = pGPIOHandle->GPIO_PinConfig.GPIO_PinNumber;
 	// 1. Configure the mode of the pin
@@ -297,18 +299,16 @@ void GPIO_ToggleOutputPin(GPIO_RegDef_t *pGPIOx, uint8_t PinNumber){
 // IRQ configuration and IRQ handling
 
 /**
- * @fn          GPIO_IRQCOnfig
+ * @fn          GPIO_IRQInterruptConfig
  *
- * @brief       Short description of what the function does (1-2 lines)
+ * @brief       Enable or disable the interrupt for a specific GPIO EXTI line in the NVIC
  *
- * @param[in]   param1      Description of first parameter
- * @param[in]   param2      Description of second parameter (if any)
- * @param[out]  param3      Description of output parameter (if any)
+ * @param[in]   IRQNumber      The interrupt number (e.g., IRQ_NO_EXTI0, IRQ_NO_EXTI1, etc.)
+ * @param[in]   EnORDi         ENABLE or DISABLE macro value
  *
- * @return      Description of return value
- *              (e.g. 0 on success, -1 on error, or void)
+ * @return      void
  *
- * @note        Any important note, limitation or usage tip
+ * @note        
  */
 
 void GPIO_IRQInterruptConfig(uint8_t IRQNumber, uint8_t EnORDi){
@@ -352,7 +352,6 @@ void GPIO_IRQInterruptConfig(uint8_t IRQNumber, uint8_t EnORDi){
  *
  * @param[in]   uint8_t IRQNumber      Description of first parameter
  * @param[in]   uint8_t IRQPriority      Description of second parameter (if any)
- * @param[out]  param3      Description of output parameter (if any)
  *
  * @return      Description of return value
  *              (e.g. 0 on success, -1 on error, or void)

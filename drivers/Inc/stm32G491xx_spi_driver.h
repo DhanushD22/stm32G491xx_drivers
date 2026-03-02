@@ -25,10 +25,21 @@ typedef struct{
 
 
 typedef struct{
-	SPI_RegDef_t 		*pSPIx;
-	SPI_Config_t 		SPIConfig;
+	SPI_RegDef_t 		*pSPIx;			/* This holds the base address of the SPI peripheral (SPI1, SPI2, etc.) to which the user wants to configure and use */
+	SPI_Config_t 		SPIConfig;		/* This holds the SPI configuration settings for the user */
+	uint8_t 			*pTxBuffer;		/* To store the app. Tx buffer address */
+	uint8_t 			*pRxBuffer;		/* To store the app. Rx buffer address */
+	uint32_t 			TxLen;			/* To store Tx length */
+	uint32_t 			RxLen;			/* To store Rx length */
+	uint8_t 			TxState;		/* To store Tx state */
+	uint8_t 			RxState;		/* To store Rx state */
 }SPI_Handle_t;
 
+
+// SPI Application States
+#define SPI_READY			0		/* SPI is ready to use			*/
+#define SPI_BUSY_IN_RX		1		/* SPI is busy in reception  	*/
+#define SPI_BUSY_IN_TX		2		/* SPI is busy in transmission 	*/
 
 /*
 * @SPI_DeviceMode
@@ -135,11 +146,24 @@ void SPI_DeInit(SPI_RegDef_t *pSPIx);
 void SPI_SendData(SPI_RegDef_t *pSPIx, uint8_t *pTxBuffer, uint32_t Len); // Arguments: Base address of the SPI peripheral, pointer to the Tx buffer(data to be sent), length of the data to be sent(standard practivce to declare the length as uint32_t even if the data to be sent is less than 255 bytes because in future we might want to send more data and we don't want to change the function prototype again and again)
 void SPI_ReceiveData(SPI_RegDef_t *pSPIx, uint8_t *pRxBuffer, uint32_t Len); // Arguments: Base address of the SPI peripheral, pointer to the Rx buffer(where the received data will be stored), length of the data to be received
 
+// Interrupt based data send and receive
+uint8_t SPI_SendDataIT(SPI_Handle_t *pSPIHandle, uint8_t *pTxBuffer, uint32_t Len); 
+uint8_t SPI_ReceiveDataIT(SPI_Handle_t *pSPIHandle, uint8_t *pRxBuffer, uint32_t Len); 
+
 // IRQ Configuration and ISR handling
 void SPI_IRQInterruptConfig(uint8_t IRQNumber, uint8_t EnORDi);
 void SPI_IRQPriorityConfig(uint8_t IRQNumber, uint8_t IRQPriority);
 void SPI_IRQHandling(SPI_Handle_t *pHandle); // we need to pass the SPI handle structure because in the interrupt handler we need to know which SPI peripheral is generating the interrupt and also we might need to access the SPI configuration settings in the interrupt handler
 
 // Other Peripheral Control APIs
+
+void SPI_PeripheralControl(SPI_RegDef_t *pSPIx, uint8_t EnORDi); // API to enable or disable the SPI peripheral (by setting or clearing the SPE bit in the CR1 register)
+
+void SPI_SSIConfig(SPI_RegDef_t *pSPIx, uint8_t EnORDi); // API to configure the SSI bit in the CR1 register (used when SSM is enabled for software slave management)
+
+void SPI_SSOEConfig(SPI_RegDef_t *pSPIx, uint8_t EnORDi); // API to configure the SSOE bit in the CR2 register (used in master mode to control the NSS pin when SSM is disabled for hardware slave management)
+
+// Other helper APIs
+uint8_t SPI_GetFlagStatus(SPI_RegDef_t *pSPIx, uint32_t FlagName); // API to check the status of a specific flag in the SPI_SR register (e.g. TXE, RXNE, BSY, etc.) by passing the flag name as an argument to the function. The function will return FLAG_SET or FLAG_RESET based on the status of the flag.
 
 #endif /* INC_STM32G491XX_SPI_DRIVER_H_ */

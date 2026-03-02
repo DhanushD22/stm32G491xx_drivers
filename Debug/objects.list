@@ -1,4 +1,4 @@
-"./Src/001LED_Toggle.o"
+"./Src/006SPI_TX_testing.o"
 "./Src/syscalls.o"
 "./Src/sysmem.o"
 "./Startup/startup_stm32g491retx.o"

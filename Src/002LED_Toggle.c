@@ -27,7 +27,7 @@ int main(void){
     Gpioled.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PIN_NO_PUPD;
 
     // Select the port for pin PA5
-    UserIn.pGPIOx = GPIOC;
+    UserIn.pGPIOx = GPIOA;
     // Pin configurations
     UserIn.GPIO_PinConfig.GPIO_PinNumber = GPIO_PIN_13;
     UserIn.GPIO_PinConfig.GPIO_PinMode = GPIO_MODE_IN;
