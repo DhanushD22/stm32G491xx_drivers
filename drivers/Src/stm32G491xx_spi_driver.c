@@ -352,6 +352,7 @@ void SPI_IRQPriorityConfig(uint8_t IRQNumber, uint8_t IRQPriority)
 
 void SPI_IRQHandling(SPI_Handle_t *pHandle)
 {
+
 }
 
 // Other Peripheral Control APIs
