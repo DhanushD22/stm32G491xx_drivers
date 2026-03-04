@@ -41,6 +41,13 @@ typedef struct{
 #define SPI_BUSY_IN_RX		1		/* SPI is busy in reception  	*/
 #define SPI_BUSY_IN_TX		2		/* SPI is busy in transmission 	*/
 
+// SPI Application Events 
+#define SPI_EVENT_TX_CMPLT		1		/* Transmission complete event 	*/
+#define SPI_EVENT_RX_CMPLT		2		/* Reception complete event 	*/
+#define SPI_EVENT_OVR_ERR		3		/* Overrun error event 			*/
+#define SPI_EVENT_CRC_ERR		4		/* CRC error event 				*/
+
+
 /*
 * @SPI_DeviceMode
 * Possible SPI Device Modes
@@ -165,5 +172,13 @@ void SPI_SSOEConfig(SPI_RegDef_t *pSPIx, uint8_t EnORDi); // API to configure th
 
 // Other helper APIs
 uint8_t SPI_GetFlagStatus(SPI_RegDef_t *pSPIx, uint32_t FlagName); // API to check the status of a specific flag in the SPI_SR register (e.g. TXE, RXNE, BSY, etc.) by passing the flag name as an argument to the function. The function will return FLAG_SET or FLAG_RESET based on the status of the flag.
+
+void SPI_ClearOVRFlag(SPI_RegDef_t *pSPIx); // API to clear the OVR (overrun) flag in the SPI_SR register. 
+
+void SPI_ApplicationEventCallback(SPI_Handle_t *pSPIHandle, uint8_t AppEv); // This is a weak function which the user application can override to get the callback from the driver when a specific event occurs (e.g. transmission complete, reception complete, overrun error, etc.). The driver will call this function and pass the SPI handle and the event code as arguments to the function. The user application can implement this function to perform specific actions based on the event that occurred.
+
+void SPI_CloseTransmission(SPI_Handle_t *pSPIHandle); // API to close the SPI transmission (used in interrupt based transmission to close the transmission when it is complete)
+void SPI_CloseReception(SPI_Handle_t *pSPIHandle); // API to close the SPI reception (used in interrupt based reception to close the reception when it is complete)
+
 
 #endif /* INC_STM32G491XX_SPI_DRIVER_H_ */

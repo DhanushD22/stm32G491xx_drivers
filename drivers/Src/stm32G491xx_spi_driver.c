@@ -7,6 +7,12 @@
 
 #include "stm32G491xx_spi_driver.h"
 #include <stdint.h>
+#include <stddef.h>
+
+// Private function (helper functions) prototypes
+static void SPI_TXE_InterruptHandle(SPI_Handle_t *pSPIHandle);
+static void SPI_RXNE_InterruptHandle(SPI_Handle_t *pSPIHandle);
+static void SPI_OVR_ErrorHandle(SPI_Handle_t *pSPIHandle);
 
 uint8_t SPI_GetFlagStatus(SPI_RegDef_t *pSPIx, uint32_t FlagName)
 {
@@ -352,7 +358,39 @@ void SPI_IRQPriorityConfig(uint8_t IRQNumber, uint8_t IRQPriority)
 
 void SPI_IRQHandling(SPI_Handle_t *pHandle)
 {
+    uint8_t temp1, temp2;
 
+    // Check for TXE
+    temp1 = SPI_GetFlagStatus(pHandle->pSPIx, SPI_TXE_FLAG);
+    temp2 = (pHandle->pSPIx->SPIx_CR2 & (1 << SPI_CR2_TXEIE)) >> SPI_CR2_TXEIE; // Check if the TXEIE bit is set in the CR2 register
+    if (temp1 && temp2)
+    { // Handle TXE
+        SPI_TXE_InterruptHandle(pHandle);
+    }
+
+    // Check for RXNE
+    temp1 = SPI_GetFlagStatus(pHandle->pSPIx, SPI_RXNE_FLAG);
+    temp2 = (pHandle->pSPIx->SPIx_CR2 & (1 << SPI_CR2_RXNEIE)) >> SPI_CR2_RXNEIE; // Check if the   RXNEIE bit is set in the CR2 register
+    if (temp1 && temp2)
+    { // Handle RXNE
+        SPI_RXNE_InterruptHandle(pHandle);
+    }
+
+    // Ignore CRC Error, TI frame format error and Maste mode fault event
+
+    // Check for OVR flag-
+    /*
+    Occurs when the firmware does not read received data fast enough.
+    New data is received before the previous data is read. SPI_DR still contains the old data so the hardware sets the OVR flag.
+    How to clear the flag: Read operation on the SPIx_DR register followed by a read operation on the SPIx_SR register. This sequence of operations will clear the OVR flag. If you don't clear the OVR flag then you won't be able to receive any more data because the hardware will not set the RXNE flag until the OVR flag is cleared.
+
+    */
+    temp1 = SPI_GetFlagStatus(pHandle->pSPIx, SPI_SR_OVR);
+    temp2 = (pHandle->pSPIx->SPIx_CR2 & (1 << SPI_CR2_ERRIE)) >> SPI_CR2_ERRIE; // Check if the ERRIE bit is set in the CR2 register
+    if (temp1 && temp2)
+    { // Handle OVR error
+        SPI_OVR_ErrorHandle(pHandle);
+    }
 }
 
 // Other Peripheral Control APIs
@@ -390,4 +428,115 @@ void SPI_SSOEConfig(SPI_RegDef_t *pSPIx, uint8_t EnORDi)
     {
         pSPIx->SPIx_CR2 &= ~(1 << SPI_CR2_SSOE);
     }
+}
+
+static void SPI_TXE_InterruptHandle(SPI_Handle_t *pSPIHandle)
+{
+    // this will be almost similar to the SPI_SendData function.
+
+    uint32_t ds = (pSPIHandle->pSPIx->SPIx_CR2 >> SPI_CR2_DS) & 0xF; // Extract the Data Size bits (4 bits) from the SPI_CR2 register
+    if (ds > 7)
+    {
+        // If true then the data size is greater than 8 bits, so we need to send 16 bits of data
+        // Load the data into the SPI_DR register
+        pSPIHandle->pSPIx->SPIx_DR = (*(uint16_t *)pSPIHandle->pTxBuffer);
+        pSPIHandle->TxLen -= 2;     // Decrease the length by 2 because we have sent 16 bits of data which is equal to 2 bytes
+        pSPIHandle->pTxBuffer += 2; // Move the Tx buffer pointer by 2 bytes to point to the next data to be sent
+    }
+    else
+    {
+        // If false then the data size is 8 bits, so we need to send 8 bits of data
+        // Load the data into the SPI_DR register
+        pSPIHandle->pSPIx->SPIx_DR = (*pSPIHandle->pTxBuffer);
+        pSPIHandle->TxLen--;     // Decrease the length by 1 because we have sent 8 bits of data which is equal to 1 byte
+        pSPIHandle->pTxBuffer++; // Move the Tx buffer pointer by 1 byte to point to the next data to be sent
+    }
+
+    if (!(pSPIHandle->TxLen))
+    {
+
+        SPI_CloseTransmission(pSPIHandle); // This function will clear the TXEIE bit, clear the Tx buffer address and length and reset the Tx state to ready.
+
+        // Also stop the communication by clearing the SPE bit in the CR1 register.
+        pSPIHandle->pSPIx->SPIx_CR1 &= ~(1 << SPI_CR1_SPE);
+        // inform the application about transmission complete by calling the application callback function.
+        SPI_ApplicationEventCallback(pSPIHandle, SPI_EVENT_TX_CMPLT); // THIS should be implemented in the application code. A week function is provided in the driver header file which the user can override in the applicaiton code.
+    }
+}
+static void SPI_RXNE_InterruptHandle(SPI_Handle_t *pSPIHandle)
+{
+    // this will be almost similar to the SPI_ReceiveData function.
+
+    uint32_t ds = (pSPIHandle->pSPIx->SPIx_CR2 >> SPI_CR2_DS) & 0xF; // Extract the Data Size bits (4 bits) from the SPI_CR2 register
+    if (ds > 7)
+    { // => 16 - bit
+        *(uint16_t *)pSPIHandle->pRxBuffer = pSPIHandle->pSPIx->SPIx_DR;
+        pSPIHandle->RxLen -= 2;
+        pSPIHandle->pRxBuffer += 2;
+    }
+    else
+    { // => 8 - bit
+        *pSPIHandle->pRxBuffer = pSPIHandle->pSPIx->SPIx_DR;
+        pSPIHandle->RxLen--;
+        pSPIHandle->pRxBuffer++;
+    }
+
+    if (!(pSPIHandle->RxLen))
+    {
+        // Reception is complete, so we can clear the RXNEIE bit to disable the RXNE interrupt because we don't want to get any more RXNE interrupts until the user starts another reception by calling the SPI_ReceiveDataIT function again.
+        SPI_CloseReception(pSPIHandle); // This function will clear the RXNEIE bit, clear the Rx buffer address and length and reset the Rx state to ready.
+
+        // Also stop the communication by clearing the SPE bit in the CR1 register.
+        pSPIHandle->pSPIx->SPIx_CR1 &= ~(1 << SPI_CR1_SPE);
+        // inform the application about reception complete by calling the application callback function.
+        SPI_ApplicationEventCallback(pSPIHandle, SPI_EVENT_RX_CMPLT); // THIS should be implemented in the application code. A week function is provided in the driver header file which the user can override in the applicaiton code.
+    }
+}
+static void SPI_OVR_ErrorHandle(SPI_Handle_t *pSPIHandle)
+{
+    // Clear the OVR flag by reading the DR and SR registers and then inform the application about the error by calling the application callback function.
+    uint8_t temp;
+    if(pSPIHandle->TxState != SPI_BUSY_IN_TX)
+    {
+        // OVR error occurred due to reception and the application is not currently busy in transmission, so we can clear the OVR flag by reading the DR and SR registers.
+        temp = pSPIHandle->pSPIx->SPIx_DR; // Read the DR register
+        temp = pSPIHandle->pSPIx->SPIx_SR; // Read the SR register
+        (void)temp;                         // To avoid unused variable warning 
+    }
+
+    // inform the application about the error by calling the application callback function.
+    SPI_ApplicationEventCallback(pSPIHandle, SPI_EVENT_OVR_ERR); // THIS should be implemented in the application code. A week function is provided in the driver header file which the user can override in the applicaiton code.
+
+}
+
+void SPI_ClearOVRFlag(SPI_RegDef_t *pSPIx)
+{
+    uint8_t temp;
+    temp = pSPIx->SPIx_DR; // Read the DR register
+    temp = pSPIx->SPIx_SR; // Read the SR register
+    (void)temp;            // To avoid unused variable warning
+}
+
+
+void SPI_CloseTransmission(SPI_Handle_t *pSPIHandle)
+{
+    // 1. Disable the TXEIE control bit to get interrupt whenever the TXE flag is set in the SPI_SR register
+    pSPIHandle->pSPIx->SPIx_CR2 &= ~(1 << SPI_CR2_TXEIE);
+    pSPIHandle->pTxBuffer = NULL;    // Clear the Tx buffer address
+    pSPIHandle->TxLen = 0;           // Clear the Tx length
+    pSPIHandle->TxState = SPI_READY; // Reset the Tx state to ready
+}
+
+void SPI_CloseReception(SPI_Handle_t *pSPIHandle)
+{
+    // 1. Disable the RXNEIE control bit to get interrupt whenever the RXNE flag is set in the SPI_SR register
+    pSPIHandle->pSPIx->SPIx_CR2 &= ~(1 << SPI_CR2_RXNEIE);
+    pSPIHandle->pRxBuffer = NULL;    // Clear the Rx buffer address
+    pSPIHandle->RxLen = 0;           // Clear the Rx length
+    pSPIHandle->RxState = SPI_READY; // Reset the Rx state to ready
+} 
+
+__weak void SPI_ApplicationEventCallback(SPI_Handle_t *pSPIHandle, uint8_t AppEv)
+{
+    // This is a weak function, the user application may override this function. This function is called from the driver when there is an event like transmission complete, reception complete, OVR error etc. The user application can implement this function to get the notification of these events and take appropriate action.
 }

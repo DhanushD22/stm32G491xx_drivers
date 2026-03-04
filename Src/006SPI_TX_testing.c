@@ -95,13 +95,13 @@ int main(void){
 	// Then send the actual data
 	SPI_SendData(SPI2, (uint8_t*)user_data, strlen(user_data)); // Send the data to the slave device
 
-	// Before Disabling the SPI peripheral confirm that the SPI is not busy in communication by checking the BSY flag in the SPI_SR register.
+	// before Disabling the SPI peripheral confirm that the SPI is not busy in communication by checking the BSY flag in the SPI_SR register.
 	while( SPI_GetFlagStatus(SPI2, SPI_BUSY_FLAG) );
 
 	// after confirming the BSY Flag is not set (i.e., SPI is not busy), disable the SPI peripheral
 	SPI_PeripheralControl(SPI2, DISABLE);
 
-	// An infinate while loop to hang the application after sending the data
+	// an infinate while loop to hang the application after sending the data
 	while(1);
 	return 0;
 }

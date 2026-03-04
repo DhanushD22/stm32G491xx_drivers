@@ -36,6 +36,7 @@
 #define no_of_PR_bits_implemented	4			// Depends on the processor for stm32G4 series it is 4
 
 #define __vo volatile
+#define __weak __attribute__((weak))
 /*
  * Base addresses of SRAM and FLASH
  */
