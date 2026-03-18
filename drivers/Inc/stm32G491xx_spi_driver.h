@@ -131,9 +131,9 @@ typedef struct{
 #define SPI_RXNE_FLAG					(1 << SPI_SR_RXNE) // Receive buffer not empty flag
 #define SPI_BUSY_FLAG					(1 << SPI_SR_BSY)  // Busy flag
 
-/*
-* API Supported by this driver (prototypes)	
-*/
+/***************************************************************************************************************** 
+* 									API Supported by this driver (prototypes)	
+******************************************************************************************************************/
 
 // Peripheral Clock Setup
 void SPI_PCLK_CTRL(SPI_RegDef_t *pSPIx, uint8_t EnORDi);

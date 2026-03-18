@@ -230,6 +230,20 @@ void SPI_SendData(SPI_RegDef_t *pSPIx, uint8_t *pTxBuffer, uint32_t Len)
         }
     }
 }
+
+/**
+ * @fn:          SPI_ReceiveData
+ *
+ * @brief:       Receives data from the SPI peripheral in blocking mode (polling based)
+ *
+ * @param[in]   pSPIx      Base address of the SPI peripheral (SPI1, SPI2, etc.)
+ * @param[in]   pRxBuffer  Pointer to the Rx buffer where received data will be stored
+ * @param[in]   Len         Length of the data to be received (in bytes)
+ *
+ * @return      void
+ *
+ * @note        This function receives data in blocking mode, meaning it will wait until the SPI peripheral has data available to receive before reading each byte of data.
+ */
 void SPI_ReceiveData(SPI_RegDef_t *pSPIx, uint8_t *pRxBuffer, uint32_t Len)
 {
     while (Len > 0)
@@ -256,6 +270,18 @@ void SPI_ReceiveData(SPI_RegDef_t *pSPIx, uint8_t *pRxBuffer, uint32_t Len)
 }
 
 // Interrupt based data send and receive
+/**
+ * @fn:          SPI_SendDataIT
+ *
+ * @brief:       Sends data from the SPI peripheral in non-blocking mode (interrupt based)
+ *
+ * @param[in]   pSPIHandle      Pointer to the SPI handle structure containing configuration settings and state information
+ * @param[in]   pTxBuffer       Pointer to the Tx buffer containing data to be sent
+ * @param[in]   Len              Length of the data to be sent (in bytes)
+ *
+ * @return      SPI_BUSY_IN_TX or SPI_READY
+ *
+ */
 
 uint8_t SPI_SendDataIT(SPI_Handle_t *pSPIHandle, uint8_t *pTxBuffer, uint32_t Len)
 {
@@ -276,6 +302,16 @@ uint8_t SPI_SendDataIT(SPI_Handle_t *pSPIHandle, uint8_t *pTxBuffer, uint32_t Le
     }
     return txstate;
 }
+
+/**
+ * @fn:          SPI_ReceiveDataIT
+ * @brief:       Receives data from the SPI peripheral in non-blocking mode (interrupt based)
+ * @param[in]   pSPIHandle      Pointer to the SPI handle structure containing configuration settings and state information
+ * @param[in]   pRxBuffer       Pointer to the Rx buffer where received data will be stored
+ * @param[in]   Len              Length of the data to be received (in bytes)
+ * @return      SPI_BUSY_IN_RX or SPI_READY
+ */
+
 uint8_t SPI_ReceiveDataIT(SPI_Handle_t *pSPIHandle, uint8_t *pRxBuffer, uint32_t Len)
 {
     uint8_t rxstate = pSPIHandle->RxState;
@@ -297,6 +333,14 @@ uint8_t SPI_ReceiveDataIT(SPI_Handle_t *pSPIHandle, uint8_t *pRxBuffer, uint32_t
 }
 
 // IRQ Configuration and ISR handling
+/**
+ * @fn:          SPI_IRQInterruptConfig
+ * @brief:       Configures the interrupt for the SPI peripheral
+ * @param[in]   IRQNumber       Interrupt number
+ * @param[in]   EnORDi          Enable or Disable interrupt
+ * @return      void
+ */
+
 void SPI_IRQInterruptConfig(uint8_t IRQNumber, uint8_t EnORDi)
 {
     if (EnORDi == ENABLE)
@@ -347,6 +391,13 @@ void SPI_IRQInterruptConfig(uint8_t IRQNumber, uint8_t EnORDi)
     }
 }
 
+/**
+ * @fn:          SPI_IRQPriorityConfig
+ * @brief:       Configures the priority for the SPI peripheral interrupt
+ * @param[in]   IRQNumber       Interrupt number
+ * @param[in]   IRQPriority     Interrupt priority
+ * @return      void
+ */
 void SPI_IRQPriorityConfig(uint8_t IRQNumber, uint8_t IRQPriority)
 {
     // 1. Find out the IPR register to be used
@@ -356,6 +407,12 @@ void SPI_IRQPriorityConfig(uint8_t IRQNumber, uint8_t IRQPriority)
     *(NVIC_IPR + (iprx * 4)) |= (IRQPriority << shift_amount);
 }
 
+/**
+ * @fn:          SPI_IRQHandling
+ * @brief:       Handles the interrupt for the SPI peripheral
+ * @param[in]   pHandle         Pointer to the SPI handle
+ * @return      void
+ */
 void SPI_IRQHandling(SPI_Handle_t *pHandle)
 {
     uint8_t temp1, temp2;
@@ -363,6 +420,26 @@ void SPI_IRQHandling(SPI_Handle_t *pHandle)
     // Check for TXE
     temp1 = SPI_GetFlagStatus(pHandle->pSPIx, SPI_TXE_FLAG);
     temp2 = (pHandle->pSPIx->SPIx_CR2 & (1 << SPI_CR2_TXEIE)) >> SPI_CR2_TXEIE; // Check if the TXEIE bit is set in the CR2 register
+    /*
+                                                                            
+    When SPI is in full-duplex mode:
+                                                                            
+    Every transmissreception.
+                                                                            
+    Even if you only hardware still shiRX.
+
+    So during transmission:
+    RXNE will be set
+    DR will contain dummy received data
+                                                                            
+    If you clear OVR while TX is ongoing:
+    You are reading DR.
+
+    That means:
+    You are consuming Rroutine might not expect.
+
+    */
+
     if (temp1 && temp2)
     { // Handle TXE
         SPI_TXE_InterruptHandle(pHandle);
@@ -376,13 +453,25 @@ void SPI_IRQHandling(SPI_Handle_t *pHandle)
         SPI_RXNE_InterruptHandle(pHandle);
     }
 
-    // Ignore CRC Error, TI frame format error and Maste mode fault event
+    // Ignore CRC Error, TI frame format error and Master mode fault event
 
     // Check for OVR flag-
     /*
-    Occurs when the firmware does not read received data fast enough.
-    New data is received before the previous data is read. SPI_DR still contains the old data so the hardware sets the OVR flag.
-    How to clear the flag: Read operation on the SPIx_DR register followed by a read operation on the SPIx_SR register. This sequence of operations will clear the OVR flag. If you don't clear the OVR flag then you won't be able to receive any more data because the hardware will not set the RXNE flag until the OVR flag is cleared.
+    OVR (Overrun Error) Flag:
+    ========================
+    CAUSE: The firmware does not read received data fast enough. New data arrives before the
+    previous data is read from SPI_DR. The hardware sets the OVR flag and discards the new data.
+
+    CONSEQUENCE: The RXNE flag will NOT be set again until the OVR flag is cleared, so the
+    SPI peripheral stops accepting new data.
+
+    HOW TO CLEAR: The hardware provides a specific clearing mechanism:
+    1. Read the SPI_DR register (removes the stale/old data from receive buffer)
+    2. Read the SPI_SR register (hardware detects this second read and clears the OVR flag)
+
+    This two-read sequence is required by the STM32 SPI hardware design. Only reading DR:
+
+    Because OVR is set when received data is not read before new data arrives. The hardware requires a two-step handshake to clear this condition: reading SPI_DR clears the RXNE flag and empties the receive buffer, and reading SPI_SR clears the OVR flag. This sequence ensures that firmware acknowledges both the buffered data and the error condition before normal reception resumes.
 
     */
     temp1 = SPI_GetFlagStatus(pHandle->pSPIx, SPI_SR_OVR);
@@ -430,6 +519,13 @@ void SPI_SSOEConfig(SPI_RegDef_t *pSPIx, uint8_t EnORDi)
     }
 }
 
+/**
+ * @fn:          SPI_TXE_InterruptHandle
+ * @brief:       Handles the TXE interrupt for the SPI peripheral
+ * @param:       pSPIHandle - Pointer to the SPI handle structure
+ * @return:      None
+*/
+
 static void SPI_TXE_InterruptHandle(SPI_Handle_t *pSPIHandle)
 {
     // this will be almost similar to the SPI_SendData function.
@@ -463,6 +559,14 @@ static void SPI_TXE_InterruptHandle(SPI_Handle_t *pSPIHandle)
         SPI_ApplicationEventCallback(pSPIHandle, SPI_EVENT_TX_CMPLT); // THIS should be implemented in the application code. A week function is provided in the driver header file which the user can override in the applicaiton code.
     }
 }
+
+/**
+ * @fn:          SPI_RXNE_InterruptHandle
+ * @brief:       Handles the RXNE interrupt for the SPI peripheral
+ * @param:       pSPIHandle - Pointer to the SPI handle structure
+ * @return:      None
+*/
+
 static void SPI_RXNE_InterruptHandle(SPI_Handle_t *pSPIHandle)
 {
     // this will be almost similar to the SPI_ReceiveData function.
@@ -496,27 +600,27 @@ static void SPI_OVR_ErrorHandle(SPI_Handle_t *pSPIHandle)
 {
     // Clear the OVR flag by reading the DR and SR registers and then inform the application about the error by calling the application callback function.
     uint8_t temp;
-    if(pSPIHandle->TxState != SPI_BUSY_IN_TX)
+    if (pSPIHandle->TxState != SPI_BUSY_IN_TX)
     {
         // OVR error occurred due to reception and the application is not currently busy in transmission, so we can clear the OVR flag by reading the DR and SR registers.
-        temp = pSPIHandle->pSPIx->SPIx_DR; // Read the DR register
-        temp = pSPIHandle->pSPIx->SPIx_SR; // Read the SR register
-        (void)temp;                         // To avoid unused variable warning 
+        // Hardware Clearing Sequence: Read DR to discard old data, then read SR to trigger hardware OVR flag clear
+        temp = pSPIHandle->pSPIx->SPIx_DR; // Step 1: Read DR (removes stale data from RX buffer)
+        temp = pSPIHandle->pSPIx->SPIx_SR; // Step 2: Read SR (hardware detects this read and clears OVR bit)
+        (void)temp;                        // To avoid unused variable warning
     }
 
     // inform the application about the error by calling the application callback function.
     SPI_ApplicationEventCallback(pSPIHandle, SPI_EVENT_OVR_ERR); // THIS should be implemented in the application code. A week function is provided in the driver header file which the user can override in the applicaiton code.
-
 }
 
 void SPI_ClearOVRFlag(SPI_RegDef_t *pSPIx)
 {
+    // Hardware clearing sequence for OVR flag: read DR, then read SR
     uint8_t temp;
-    temp = pSPIx->SPIx_DR; // Read the DR register
-    temp = pSPIx->SPIx_SR; // Read the SR register
+    temp = pSPIx->SPIx_DR; // Step 1: Read DR (removes stale data)
+    temp = pSPIx->SPIx_SR; // Step 2: Read SR (clears OVR bit)
     (void)temp;            // To avoid unused variable warning
 }
-
 
 void SPI_CloseTransmission(SPI_Handle_t *pSPIHandle)
 {
@@ -534,7 +638,7 @@ void SPI_CloseReception(SPI_Handle_t *pSPIHandle)
     pSPIHandle->pRxBuffer = NULL;    // Clear the Rx buffer address
     pSPIHandle->RxLen = 0;           // Clear the Rx length
     pSPIHandle->RxState = SPI_READY; // Reset the Rx state to ready
-} 
+}
 
 __weak void SPI_ApplicationEventCallback(SPI_Handle_t *pSPIHandle, uint8_t AppEv)
 {

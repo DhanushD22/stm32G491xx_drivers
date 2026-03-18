@@ -129,7 +129,6 @@ typedef struct {
  * RCC registers
 */
 
-
 typedef struct{
 
 	__vo uint32_t CR;				/*Address Offset: 0x00*/
@@ -226,7 +225,7 @@ typedef struct
 
 
 /*
- * ESPI Regester Structure Definition
+ * SPI Regester Structure Definition
 */
 
 typedef struct 
@@ -242,7 +241,24 @@ typedef struct
 	__vo uint32_t SPIx_I2SPR;			/* 		Offset: 0x20		*/
 }SPI_RegDef_t;
 
+/**
+ * I2C Peripheral Register Structure Definition
+*/
 
+typedef struct{
+	__vo uint32_t I2C_CR1;				/*	Offset: 0x00	*/
+	__vo uint32_t I2C_CR2;				/*	Offset: 0x04	*/
+	__vo uint32_t I2C_OAR1;				/*	Offset: 0x08	*/
+	__vo uint32_t I2C_OAR2;				/*	Offset: 0x0C	*/
+	__vo uint32_t I2C_TIMINGR;			/*	Offset: 0x10	*/
+	__vo uint32_t I2C_TIMEOUTR;			/*	Offset: 0x14	*/
+	__vo uint32_t I2C_ISR;				/*	Offset: 0x18	*/
+	__vo uint32_t I2C_ICR;				/*	Offset: 0x1C	*/
+	__vo uint32_t I2C_PECR;				/*	Offset: 0x20	*/
+	__vo uint32_t I2C_RXDR;				/*	Offset: 0x24	*/
+	__vo uint32_t I2C_TXDR;				/*	Offset: 0x28	*/
+
+}I2C_RegDef_t;
 
 /************************************Peripheral Definitions******************************************************/
 
@@ -274,6 +290,14 @@ typedef struct
 #define SPI2		( (SPI_RegDef_t*)SPI2_BASEADDR )
 #define SPI3		( (SPI_RegDef_t*)SPI3_BASEADDR )	
 #define SPI4 		( (SPI_RegDef_t*)SPI4_BASEADDR )
+
+/**
+ * I2C Peripherals
+ */
+#define I2C1		( (I2C_RegDef_t*)I2C1_BASEADDR )
+#define I2C2		( (I2C_RegDef_t*)I2C2_BASEADDR )
+#define I2C3		( (I2C_RegDef_t*)I2C3_BASEADDR )
+#define I2C4		( (I2C_RegDef_t*)I2C4_BASEADDR )
 
 /*
  * Clock Enable macro for GPIOx(x = A, B,....,G) peripherals
@@ -466,6 +490,79 @@ typedef struct
 #define SPI_SR_FRLVL			9		/* FIFO reception level */
 #define SPI_SR_FTLVL			11		/* FIFO transmission level */
 
+// Bit Position Macros of I2C registers
+
+// 1. I2C_CR1 Register
+#define I2C_CR1_PE				0		/* Peripheral enable */
+#define I2C_CR1_TXIE			1		/* TX interrupt enable */
+#define I2C_CR1_RXIE			2		/* RX interrupt enable */
+#define I2C_CR1_ADDRIE			3		/* Address match interrupt enable */
+#define I2C_CR1_NACKIE			4		/* NACK received interrupt enable */
+#define I2C_CR1_STOPIE			5		/* STOP detection interrupt enable */
+#define I2C_CR1_TCIE			6		/* Transfer complete interrupt enable */
+#define I2C_CR1_ERRIE			7		/* Errors interrupt enable */
+#define I2C_CR1_DNF				8		/* Digital noise filter */
+#define I2C_CR1_ANFOFF			12		/* Analog noise filter OFF */
+#define I2C_CR1_TXDMAEN			14		/* DMA transmission enable */	
+#define I2C_CR1_RXDMAEN			15		/* DMA reception enable */
+#define I2C_CR1_SBC 			16		/* Slave byte control */
+#define I2C_CR1_NOSTRETCH 		17		/* Clock stretching disable */
+#define I2C_CR1_WUPEN			18		/* Wakeup from STOP enable */
+#define I2C_CR1_GCEN			19		/* General call enable */
+#define I2C_CR1_SMBHEN			20		/* SMBus host address enable */
+#define I2C_CR1_SMBDEN			21		/* SMBus device default address enable */
+#define I2C_CR1_ALERTEN			22		/* SMBus alert enable */
+#define I2C_CR1_PECEN			23		/* PEC enable */
+
+// 2. I2C_CR2 Register
+#define I2C_CR2_SADD			0		/* Slave address (7-bit or 10-bit) */
+#define I2C_CR2_RD_WRN			10		/* Transfer direction (master mode) */
+#define I2C_CR2_ADD10			11		/* 10-bit addressing mode */
+#define I2C_CR2_HEAD10R			12		/* 10-bit address header only read direction (master mode) */
+#define I2C_CR2_START			13		/* Start generation */
+#define I2C_CR2_STOP			14		/* Stop generation */
+#define I2C_CR2_NACK			15		/* NACK generation (slave mode) */
+#define I2C_CR2_NBYTES			16		/* Number of bytes */
+#define I2C_CR2_RELOAD			24		/* NBYTES reload mode */
+#define I2C_CR2_AUTOEND			25		/* Automatic end mode (master mode) */
+#define I2C_CR2_PECBYTE			26		/* Packet error checking byte */
+
+// 3. I2C_ISR Register
+#define I2C_ISR_TXE 			0		/* */
+#define I2C_ISR_TXIS			1		/* Transmit interrupt status */			
+#define I2C_ISR_RXNE			2		/* Receive data register not empty */
+#define I2C_ISR_ADDR			3		/* Address matched (slave mode) */
+#define I2C_ISR_NACKF			4		/* NACK received flag */
+#define I2C_ISR_STOPF			5		/* STOP detection flag */
+#define I2C_ISR_TC				6		/* Transfer complete (master mode) */
+#define I2C_ISR_TCR				7		/* Transfer complete reload */
+#define I2C_ISR_BERR			8		/* Bus error */
+#define I2C_ISR_ARLO			9		/* Arbitration lost */
+#define I2C_ISR_OVR				10		/* Overrun/Underrun */
+#define I2C_ISR_PECERR			11		/* PEC error in reception */
+#define I2C_ISR_TIMEOUT			12		/* Timeout or Tlow error */
+#define I2C_ISR_ALERT			13		/* SMBus alert */
+#define I2C_ISR_BUSY			15		/* Bus busy */
+#define I2C_ISR_DIR 			16		/* Transfer direction (slave mode) */
+#define I2C_ISR_ADDCODE			17		/* Address match code (slave mode) : These bits are updated with the received address when an address match event occurs (ADDR = 1). */
+
+// 4. I2C_ICR Register
+#define I2C_ICR_ADDRCF			3		/* Address matched clear flag */
+#define I2C_ICR_NACKCF			4		/* NACK clear flag */
+#define I2C_ICR_STOPCF			5		/* STOP detection clear flag */
+#define I2C_ICR_BERRCF			8		/* Bus error clear flag */
+#define I2C_ICR_ARLOCF			9		/* Arbitration lost clear flag */
+#define I2C_ICR_OVRCF			10		/* Overrun/Underrun clear flag */
+#define I2C_ICR_PECCF			11		/* PEC error clear flag */
+#define I2C_ICR_TIMOUTCF		12		/* Timeout clear flag */
+#define I2C_ICR_ALERTCF			13		/* Alert clear flag */
+
+// 5. I2C_TIMINGR Register
+#define I2C_TIMINGR_SCLL		0		/* SCL low period (master mode) */
+#define I2C_TIMINGR_SCLH		8		/* SCL high period (master mode) */
+#define I2C_TIMINGR_SDADEL		16		/* Data hold time (master mode) and data setup time (slave mode) */
+#define I2C_TIMINGR_SCLDEL		20		/* Data setup time (master mode) and data hold time (slave mode) */
+#define I2C_TIMINGR_PRESC		28		/* Timing prescaler */
 
 
 /*
@@ -483,5 +580,6 @@ typedef struct
 
 #include "stm32G491xx_gpio_driver.h"
 #include "stm32G491xx_spi_driver.h"
+#include "stm32G491xx_i2c_driver.h"
 
 #endif

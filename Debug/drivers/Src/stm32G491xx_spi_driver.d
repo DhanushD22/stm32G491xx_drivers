@@ -3,8 +3,10 @@ drivers/Src/stm32G491xx_spi_driver.o: \
  /home/dhanush/STM32CubeIDE/workspace_stm32G491xx_drivers/stm32G491xx_drivers/drivers/Inc/stm32G491xx_spi_driver.h \
  /home/dhanush/STM32CubeIDE/workspace_stm32G491xx_drivers/stm32G491xx_drivers/drivers/Inc/stm32G491xx.h \
  /home/dhanush/STM32CubeIDE/workspace_stm32G491xx_drivers/stm32G491xx_drivers/drivers/Inc/stm32G491xx_gpio_driver.h \
- /home/dhanush/STM32CubeIDE/workspace_stm32G491xx_drivers/stm32G491xx_drivers/drivers/Inc/stm32G491xx_spi_driver.h
+ /home/dhanush/STM32CubeIDE/workspace_stm32G491xx_drivers/stm32G491xx_drivers/drivers/Inc/stm32G491xx_spi_driver.h \
+ /home/dhanush/STM32CubeIDE/workspace_stm32G491xx_drivers/stm32G491xx_drivers/drivers/Inc/stm32G491xx_i2c_driver.h
 /home/dhanush/STM32CubeIDE/workspace_stm32G491xx_drivers/stm32G491xx_drivers/drivers/Inc/stm32G491xx_spi_driver.h:
 /home/dhanush/STM32CubeIDE/workspace_stm32G491xx_drivers/stm32G491xx_drivers/drivers/Inc/stm32G491xx.h:
 /home/dhanush/STM32CubeIDE/workspace_stm32G491xx_drivers/stm32G491xx_drivers/drivers/Inc/stm32G491xx_gpio_driver.h:
 /home/dhanush/STM32CubeIDE/workspace_stm32G491xx_drivers/stm32G491xx_drivers/drivers/Inc/stm32G491xx_spi_driver.h:
+/home/dhanush/STM32CubeIDE/workspace_stm32G491xx_drivers/stm32G491xx_drivers/drivers/Inc/stm32G491xx_i2c_driver.h:
